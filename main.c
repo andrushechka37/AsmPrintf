@@ -1,15 +1,17 @@
 #include <stdio.h>
+#include <stdlib.h>
 
-extern void f();
+extern void start();
 
+char str[] = "12";
 
-// C and CPP issue
+int main() {
+    printf("\n>>> main(): start\n\n");
 
-int main (void) {
-    int a = 5;
-    int b = 5;
-    int c = 45;
-    int d = 78;
-    f();
+    int a = 85, b = 14;
 
+    start();
+
+    printf("\n<<< main(): end\n\n");
+    exit(0);
 }
