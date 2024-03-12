@@ -1,28 +1,22 @@
+;:================================================
+;: 0-Linux-nasm-64.s                   (c)Ded,2012
+;:================================================
+
+; nasm -f elf64 -l 1-nasm.lst 1-nasm.s  ;  ld -s -o 1-nasm 1-nasm.o
+
 section .text
 
-    global _start
+global hui                ; predefined entry point name for ld
 
-_start:
-    mov rsi, msg        ; Указатель на строку
-    mov rcx, len        ; Длина строки
-print_loop:
-    mov rdi, 1          ; Файловый дескриптор 1 - stdout
-    mov rdx, 1          ; Длина выводимых данных (один символ)
-    mov rax, 0x2000004  ; Системный вызов write
-    syscall
-
-    inc rsi             ; Увеличиваем указатель на символ
-    loop print_loop     ; Повторяем цикл, пока не выведем все символы
-
-    ;mov rax, 0x2000001  ; Системный вызов exit
-    ;xor rdi, rdi        ; Код возврата 0
-    ;syscall
-
-    ret
-
-section .data
-    msg db 'Hello, World!', 0
-    len equ $ - msg
-
-; ld -e start -static -o 1 printf.o
-; nasm -f macho64 printf.s
+hui:        mov rax, 0x01      ; write64 (rdi, rsi, rdx) ... r10, r8, r9
+            mov rdi, 1         ; stdout
+            mov rsi, Msg
+            mov rdx, MsgLen    ; strlen (Msg)
+            syscall
+            
+            ret
+            
+section     .data
+            
+Msg:        db "__Hllwrld", 0x0a
+MsgLen      equ $ - Msg

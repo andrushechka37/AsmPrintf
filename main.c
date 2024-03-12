@@ -1,17 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-extern void start();
+extern void hui();
 
-char str[] = "12";
 
 int main() {
     printf("\n>>> main(): start\n\n");
 
     int a = 85, b = 14;
 
-    start();
+    hui();
 
     printf("\n<<< main(): end\n\n");
-    exit(0);
+    return 0;
 }

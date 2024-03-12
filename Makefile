@@ -1,9 +1,5 @@
-.Phony print: main.o printf.o
-	arch -x86_64 gcc main.o printf.o -o main
-
-main.o: main.c
-	arch -x86_64 gcc -c main.c
+.Phony print: printf.o main.c
+	gcc -no-pie main.c printf.o && ./a.out
 
 printf.o: printf.s
-	nasm -f macho64 printf.s
-# TODO: Put some effort in your makefile
+	nasm -f elf64 -l printf.lst printf.s
