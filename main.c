@@ -11,7 +11,7 @@ void print(int x) {
 int main() {
     //printf("\n>>> main(): super_printf\n\n");
 
-    int a = 19349857;
+    int a = 150;
 
     char str[] = "haha %d gogohe\n\n";
     super_printf(str, a);

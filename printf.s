@@ -6,13 +6,6 @@ section .text
 
 global super_printf                     ; predefined entry point name for ld
 
-
-;; организовать свой стек для dec to str
-;; универсальная преобразовалка с основанием системы счисления с алфавитом как в резиденте
-;; пушить в буфер в обратном порядке потом функция которая нужное колво раз вызывает принтчар 
-
-
-
 ;; %c (done)
 ;; %s (done)
 ;; %d
@@ -51,7 +44,7 @@ super_printf:
 
                 inc rsi
 
-                call print_int
+                call switch_func
                 jmp percent
 
 
@@ -85,7 +78,7 @@ percent:
 ;; writes char to stdout
 ;; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;;
-;; Entry:  /RDI/  --  pointer to char
+;; Entry:  /RSI/  --  pointer to char
 ;;
 ;;
 ;; Side Effects: writes char to stdout
@@ -120,14 +113,9 @@ print_char:
 ;; =====================================================================
 ;; prints int iumber
 ;; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;; Signature: 
 ;;
 ;;
-;;
-;; Expect: 
-;;
-;;
-;; Entry: 
+;; Entry:       /R12/  --  основание системы счисления
 ;;
 ;;
 ;; Return: 
@@ -145,7 +133,7 @@ print_char:
 
 print_int:
 
-                mov r11, 10             ; make a func to make divs <<< >>>> ------------------!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                                        ; make a func to make divs <<< >>>> ------------------!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 mov rax, r9             ; mov 2 arg from super printf
                 mov rcx, buffer         ;
                 xor rdx, rdx
@@ -153,13 +141,13 @@ print_int:
 
         itoa_loop:
 
-                div r11                 ; div to the base of the sistema schslenia
+                div r12                 ; div to the base of the sistema schslenia
                                         ; rdx = rdx:rax % rbx
                                         ; rax = rdx:rax / rbx
 
-                add rdx, hex_alphabet
-                mov bl, [rdx]   ; mov [rcx], [rdx + hex_alphabet]
-                mov [rcx], bl                  ;z
+                add rdx, hex_alphabet          ;
+                mov bl, [rdx]                  ; mov [rcx], [rdx + hex_alphabet]
+                mov [rcx], bl                  ;
 
                 inc rcx
                 cmp rax, 0
@@ -174,8 +162,6 @@ print_int:
 
                 sub rcx, buffer   ; size of stack
 
-                mov r11, [buffer]
-                mov r12, [buffer + 1]
                 call print_buffer
 
                 ret
@@ -186,6 +172,37 @@ print_int:
 ;; =====================================================================
 ;;                          print_buffer
 ;; =====================================================================
+;; prints stack in reversed order
+;; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+;;
+;; Entry:       /RCX/  --  size of stack
+;;
+;;
+;; Destr: /RCX/
+;; ---------------------------------------------------------------------
+print_buffer:
+                push rsi                ; save ptr to str
+
+                mov rsi, rcx            ;
+                add rsi, buffer         ; rsi = buffer[size]
+                
+                inc rcx
+        
+        print_buffer_loop:
+                                        
+                call print_char
+                dec rsi 
+
+                loop print_buffer_loop
+
+                pop rsi
+                ret
+
+
+
+;; =====================================================================
+;;                          fast_div
+;; =====================================================================
 ;; 
 ;; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;; Signature: 
@@ -195,9 +212,9 @@ print_int:
 ;; Expect: 
 ;;
 ;;
-;; Entry: /RCX/  --  size of stack
+;; Entry:             /R12/  --  delitel
 ;;
-;;
+;;              /RDX/:/RAX/  --  delimoe
 ;; Return: 
 ;;
 ;;
@@ -210,30 +227,57 @@ print_int:
 ;;
 ;; Destr: 
 ;; ---------------------------------------------------------------------
-print_buffer:
-                push rsi                ; save ptr to str
+;fast_div:
+                ;cmp r12, 10
+                ;je decimal
 
-                mov rsi, rcx            ;
-                add rsi, buffer         ; rsi = buffer[size]
+               ; mov rdx, rax            ;
+                ;shr rax, r12            ;
+                ;rol rdx, r12            ; rdx - остаток
+                ;neg r12                 ;
+                ;add r12, 64             ;
+                ;shr rdx, r12            ;
+
+                ;ret
+
+        ;decimal:
+                ;div r12
+                ;ret
+
+
+switch_func:
+
+                cmp byte [rsi], 'o'
+                mov r12, 8
+                je end_of_swith
+
+                cmp byte [rsi], 'x'
+                mov r12, 16
+                je end_of_swith
+
+                cmp byte [rsi], 'b'
+                mov r12, 2
+                je end_of_swith
+
+                cmp byte [rsi], 'd'
+                mov r12, 10
+                je end_of_swith 
+
+                cmp byte [rsi], 'c'
+                je char_func
+                cmp byte [rsi], 's'
+                je str_func             ; обработка ошибок
                 
-                inc rcx
-        
-        print_buffer_loop:
-                                        ; rep??????????
-                call print_char
+        end_of_swith:
 
-                dec rsi 
-                loop print_buffer_loop
-
-
-
-                pop rsi
+                call print_int
                 ret
-
-
-
-
-
+        char_func:
+                call print_char
+                ret
+        str_func:
+                call super_printf
+                ret
 
 
 section     .data
