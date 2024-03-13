@@ -35,6 +35,9 @@ global super_printf
 ;; Destr:  /RSI/  
 ;; ---------------------------------------------------------------------
 super_printf:   
+
+                pop rax         ; ret address
+
                 push r9         ;
                 push r8         ;
                 push rcx        ; register srgs to stack
@@ -50,18 +53,15 @@ super_printf:
 
         printf_loop:
 
-                xor rbx, rbx
-                mov bl, [rsi]
-                mov bl, [rsi + 1]
-                mov bl, [rsi + 2]
-                mov bl, [rsi + 3]
-
                 cmp byte [rsi], '%'
                 jne not_percent
 
                 inc rsi         ; skip %
 
+                push rax
                 call switch_func
+                pop rax
+
                 jmp percent
 
 
@@ -81,7 +81,9 @@ percent:
         end_of_str:
 
                 pop rbp
+
                 add rsp, 40             ; pop 5
+                push rax
                 ret
             
 
@@ -144,9 +146,9 @@ print_char:
 
 print_number:
 
-        
-                mov rax, [rbp + 8]              ; take next agr from stack
-                add rbp, 8                      ;
+                xor rax, rax
+                mov eax, [rbp + 8]             
+                add rbp, 8                         
 
                 mov rcx, buffer                 ; rcx = ptr to buffer
 
@@ -185,6 +187,9 @@ print_number:
                 loop itoa_loop
                 
         end_of_ioa_loop:
+
+;; -----------------------below zero correction--------------------------
+
                 mov r13, neg_flag
                 cmp byte [r13], 0
                 mov byte [r13], 0
@@ -192,13 +197,13 @@ print_number:
 
                 mov byte [rcx], '-'
                 inc rcx
+;; ---------------------------------------------------------------------
 
         positive_number:
 
                 sub rcx, buffer   ; size of stack
 
                 call print_buffer
-
                 ret
 
 
@@ -220,7 +225,7 @@ print_buffer:
 
                 mov rsi, rcx            ;
                 add rsi, buffer         ; rsi = buffer[size]
-                dec rsi
+                dec rsi                 ;
                 
         
         print_buffer_loop:
@@ -282,9 +287,9 @@ print_buffer:
 
 ;; just bad
 switch_func:
-
                 cmp byte [rsi], 'o'
                 mov r12, 8
+                
                 je end_of_swith
 
                 cmp byte [rsi], 'x'
@@ -309,10 +314,11 @@ switch_func:
                 call print_number
                 ret
         char_func:
+                xor r11, r11
                 push rsi
                 mov rsi, buffer
 
-                mov r11, [rbp + 8]
+                mov byte r11, [rbp + 8]
                 add rbp, 8
                 mov [rsi], r11
 
@@ -339,3 +345,4 @@ MsgLen      equ $ - Msg
 buffer times 256 db 0
 hex_alphabet: db '0123456789abcdef'
 neg_flag db 0
+ret_addres dq 0
