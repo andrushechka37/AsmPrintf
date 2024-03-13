@@ -4,15 +4,22 @@
 
 section .text
 
-global super_printf                     ; predefined entry point name for ld
+global super_printf
+
+; Почему если убрать push rbp вместе с pop rbp то будет ошибка, хотя стек сбалансирован-------?????????????
+
+
+; fast div
+; jump table
+; %d < 0
 
 ;; %c (done)
 ;; %s (done)
-;; %d
+;; %d (done) tested
 ;; %%
-;; %x
-;; %o
-;; %b 
+;; %x (done) tested
+;; %o (done) tested
+;; %b (done) tested
 
 
 ;; =====================================================================
@@ -20,29 +27,33 @@ global super_printf                     ; predefined entry point name for ld
 ;; =====================================================================
 ;; emulates C printf
 ;; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;; Signature: void super_printf(char * str);
+;;
+;; Signature: void super_printf(char * str, ...)
 ;;
 ;; Entry:  /RDI/  --  ptr to str
 ;;
-;;
-;; Note: 
-;;
-;;
-;;
-;; Side Effects:
-;;
-;; Destr:  place holder
+;; Destr:  /RSI/  
 ;; ---------------------------------------------------------------------
 super_printf:   
-                mov r9, rsi
-                mov rsi, rdi            ; ptr to str
+                push r9         ;
+                push r8         ;
+                push rcx        ; register srgs to stack
+                push rdx        ;
+                push rsi        ;
+
+
+                push rbp        ;
+                mov rbp, rsp    ; bp for stack frame
+
+
+                mov rsi, rdi    ; ptr to str
 
         printf_loop:
 
                 cmp byte [rsi], '%'
                 jne not_percent
 
-                inc rsi
+                inc rsi         ; skip %
 
                 call switch_func
                 jmp percent
@@ -62,6 +73,9 @@ percent:
                 loop printf_loop
 
         end_of_str:
+
+                pop rbp
+                add rsp, 40             ; pop 5
                 ret
             
 
@@ -109,44 +123,37 @@ print_char:
 
 
 ;; =====================================================================
-;;                          print_int
+;;                          print_number
 ;; =====================================================================
-;; prints int iumber
+;; prints number to stdout
 ;; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;;
 ;;
 ;; Entry:       /R12/  --  основание системы счисления
 ;;
-;;
-;; Return: 
-;;
-;;
-;; Note: 
-;;
-;;
-;; Call Convention: CDECL
-;;
-;; Side Effects:
-;;
-;; Destr: 
+;; Destr: /RAX/  /RBP/  /RCX/  /RDX/
 ;; ---------------------------------------------------------------------
 
-print_int:
+print_number:
 
-                                        ; make a func to make divs <<< >>>> ------------------!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                mov rax, r9             ; mov 2 arg from super printf
-                mov rcx, buffer         ;
+        
+                mov rax, [rbp + 8]              ; take next agr from stack
+                add rbp, 8                      ;
+
+                mov rcx, buffer                 ; rcx = ptr to buffer
+
                 xor rdx, rdx
                 
 
         itoa_loop:
-
+                                        ; make a func to make divs <<< >>>> ------------------!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 div r12                 ; div to the base of the sistema schslenia
                                         ; rdx = rdx:rax % rbx
                                         ; rax = rdx:rax / rbx
 
+
                 add rdx, hex_alphabet          ;
-                mov bl, [rdx]                  ; mov [rcx], [rdx + hex_alphabet]
+                mov bl, [rdx]                  ; mov [rcx], hex_apphabet[rdx]
                 mov [rcx], bl                  ;
 
                 inc rcx
@@ -185,8 +192,8 @@ print_buffer:
 
                 mov rsi, rcx            ;
                 add rsi, buffer         ; rsi = buffer[size]
+                dec rsi
                 
-                inc rcx
         
         print_buffer_loop:
                                         
@@ -245,6 +252,7 @@ print_buffer:
                 ;ret
 
 
+;; just bad
 switch_func:
 
                 cmp byte [rsi], 'o'
@@ -270,13 +278,19 @@ switch_func:
                 
         end_of_swith:
 
-                call print_int
+                call print_number
                 ret
         char_func:
+
                 call print_char
                 ret
         str_func:
+                push rsi
+                mov rsi, [rbp + 8]              ; take next agr from stack
+                add rbp, 8                      ;
+
                 call super_printf
+                pop rsi
                 ret
 
 

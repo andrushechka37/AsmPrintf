@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-extern void super_printf(char * str, int a);
+extern void super_printf(char * str, ...);
 
 void print(int x) {
     printf("\nx is %d\n", x);
@@ -11,10 +11,12 @@ void print(int x) {
 int main() {
     //printf("\n>>> main(): super_printf\n\n");
 
-    int a = 150;
+    int a = 1234;
+    int b = 78;
+    int c = 9898;
+    int d = 4;
 
-    char str[] = "haha %d gogohe\n\n";
-    super_printf(str, a);
+    super_printf("%b %o %x %x\n\n", a, b, c ,d);
 
     //printf("\n<<< main(): end\n\n");
     return 0;
