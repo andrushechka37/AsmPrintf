@@ -137,6 +137,8 @@ print_char:
 ;;
 ;; Entry:       /R12/  --  основание системы счисления
 ;;
+;;              /RAX/  --  argument to print
+;;
 ;; Destr: /RAX/  /RBP/  /RCX/  /RDX/
 ;; ---------------------------------------------------------------------
 
@@ -149,7 +151,18 @@ print_number:
                 mov rcx, buffer                 ; rcx = ptr to buffer
 
                 xor rdx, rdx
-                
+
+
+;; ------------------------rax below zero-------------------------------
+
+                test rax, 80000000h 
+                jz itoa_loop
+
+                mov r13, neg_flag
+                mov byte [r13], 1
+                neg eax
+
+;; ---------------------------------------------------------------------
 
         itoa_loop:
                                         ; make a func to make divs <<< >>>> ------------------!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -172,6 +185,15 @@ print_number:
                 loop itoa_loop
                 
         end_of_ioa_loop:
+                mov r13, neg_flag
+                cmp byte [r13], 0
+                mov byte [r13], 0
+                je positive_number
+
+                mov byte [rcx], '-'
+                inc rcx
+
+        positive_number:
 
                 sub rcx, buffer   ; size of stack
 
@@ -316,3 +338,4 @@ MsgLen      equ $ - Msg
 
 buffer times 256 db 0
 hex_alphabet: db '0123456789abcdef'
+neg_flag db 0
