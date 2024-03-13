@@ -13,8 +13,8 @@ global super_printf
 ; jump table
 ; %d < 0
 
-;; %c (done)
-;; %s (done)
+;; %c (done) tested
+;; %s (done) tested
 ;; %d (done) tested
 ;; %%
 ;; %x (done) tested
@@ -49,6 +49,12 @@ super_printf:
                 mov rsi, rdi    ; ptr to str
 
         printf_loop:
+
+                xor rbx, rbx
+                mov bl, [rsi]
+                mov bl, [rsi + 1]
+                mov bl, [rsi + 2]
+                mov bl, [rsi + 3]
 
                 cmp byte [rsi], '%'
                 jne not_percent
@@ -281,16 +287,25 @@ switch_func:
                 call print_number
                 ret
         char_func:
+                push rsi
+                mov rsi, buffer
+
+                mov r11, [rbp + 8]
+                add rbp, 8
+                mov [rsi], r11
 
                 call print_char
+                pop rsi
                 ret
         str_func:
+                push rdi
                 push rsi
-                mov rsi, [rbp + 8]              ; take next agr from stack
+                mov rdi, [rbp + 8]              ; take next agr from stack
                 add rbp, 8                      ;
 
                 call super_printf
                 pop rsi
+                pop rdi
                 ret
 
 
