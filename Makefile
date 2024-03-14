@@ -3,3 +3,5 @@
 
 printf.o: printf.s
 	nasm -f elf64 -l printf.lst printf.s
+
+

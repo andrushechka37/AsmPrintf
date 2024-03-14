@@ -50,6 +50,7 @@ super_printf:
 
 
                 mov rsi, rdi    ; ptr to str
+                push rax
 
         printf_loop:
 
@@ -58,9 +59,15 @@ super_printf:
 
                 inc rsi         ; skip %
 
-                push rax
-                call switch_func
-                pop rax
+                xor rcx, rcx
+                xor rax, rax
+
+                mov al, [rsi]                   ;
+                sub al, 'b'                     ;
+                shl rax, 3                      ; jmp jump_table + ([rsi] - 'b') * 8
+                add rax, jump_table             ;
+                
+                jmp [rax]
 
                 jmp percent
 
@@ -79,6 +86,7 @@ percent:
                 loop printf_loop
 
         end_of_str:
+                pop rax
 
                 pop rbp
 
@@ -137,22 +145,27 @@ print_char:
 ;; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;;
 ;;
-;; Entry:       /R12/  --  основание системы счисления
+;; Entry:       /СL/  --  на сколько сдвиг
 ;;
 ;;              /RAX/  --  argument to print
+;;
+;;              /R8/  -- delitel
 ;;
 ;; Destr: /RAX/  /RBP/  /RCX/  /RDX/
 ;; ---------------------------------------------------------------------
 
 print_number:
 
-                xor rax, rax
-                mov eax, [rbp + 8]             
-                add rbp, 8                         
+                xor rax, rax            ;
+                mov eax, [rbp + 8]      ; take arg from stack    
+                add rbp, 8              ;      
+
+                mov r14, rcx
+                dec r8
 
                 mov rcx, buffer                 ; rcx = ptr to buffer
 
-                xor rdx, rdx
+                xor rdx, rax
 
 
 ;; ------------------------rax below zero-------------------------------
@@ -167,10 +180,17 @@ print_number:
 ;; ---------------------------------------------------------------------
 
         itoa_loop:
+                mov rdx, rax
+                push rcx
+                mov rcx, r14
                                         ; make a func to make divs <<< >>>> ------------------!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                div r12                 ; div to the base of the sistema schslenia
+                shr rax, cl             ; div to the base of the sistema schslenia
                                         ; rdx = rdx:rax % rbx
                                         ; rax = rdx:rax / rbx
+
+                pop rcx
+
+                and rdx, r8
 
 
                 add rdx, hex_alphabet          ;
@@ -238,103 +258,118 @@ print_buffer:
                 pop rsi
                 ret
 
+binary_type:
+        mov cl, 1
+        mov r8, 2
+        call print_number
+        jmp percent
+
+char_type:
+        xor r11, r11
+        push rsi
+        mov rsi, buffer
+
+        mov byte r11, [rbp + 8]
+        add rbp, 8
+        mov [rsi], r11
+
+        call print_char
+        pop rsi
+        jmp percent
+
+int_type:
+
+        call print_integer
+        jmp percent
+
+type_oct:
+        mov cl, 3
+        mov r8, 8
+        call print_number
+        jmp percent
+
+type_string:
+        push rdi
+        push rsi
+        mov rdi, [rbp + 8]              ; take next agr from stack
+        add rbp, 8                      ;
+
+        call super_printf
+        pop rsi
+        pop rdi
+        jmp percent
+
+type_hex:
+        mov cl, 4
+        mov r8, 16
+        call print_number
+        jmp percent       
 
 
-;; =====================================================================
-;;                          fast_div
-;; =====================================================================
-;; 
-;; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;; Signature: 
-;;
-;;
-;;
-;; Expect: 
-;;
-;;
-;; Entry:             /R12/  --  delitel
-;;
-;;              /RDX/:/RAX/  --  delimoe
-;; Return: 
-;;
-;;
-;; Note: 
-;;
-;;
-;; Call Convention: CDECL
-;;
-;; Side Effects:
-;;
-;; Destr: 
-;; ---------------------------------------------------------------------
-;fast_div:
-                ;cmp r12, 10
-                ;je decimal
-
-               ; mov rdx, rax            ;
-                ;shr rax, r12            ;
-                ;rol rdx, r12            ; rdx - остаток
-                ;neg r12                 ;
-                ;add r12, 64             ;
-                ;shr rdx, r12            ;
-
-                ;ret
-
-        ;decimal:
-                ;div r12
-                ;ret
+align 8
+jump_table:
+        dq binary_type          ; b
+        dq char_type            ; c
+        dq int_type             ; d
+        times 10 dq 'd'         ; d - o
+        dq type_oct             ; o
+        times 3 dq 'o'
+        dq type_string          ; s
+        times 4 dq 's'
+        dq type_hex             ; x
 
 
-;; just bad
-switch_func:
-                cmp byte [rsi], 'o'
-                mov r12, 8
-                
-                je end_of_swith
 
-                cmp byte [rsi], 'x'
-                mov r12, 16
-                je end_of_swith
 
-                cmp byte [rsi], 'b'
-                mov r12, 2
-                je end_of_swith
 
-                cmp byte [rsi], 'd'
+
+print_integer:
                 mov r12, 10
-                je end_of_swith 
-
-                cmp byte [rsi], 'c'
-                je char_func
-                cmp byte [rsi], 's'
-                je str_func             ; обработка ошибок
-                
-        end_of_swith:
-
-                call print_number
+                xor rax, rax
+                mov eax, [rbp + 8]             
+                add rbp, 8                         
+                mov rcx, buffer                 ; rcx = ptr to buffer
+                xor rdx, rdx
+;; ------------------------rax below zero-------------------------------
+                test rax, 80000000h 
+                jz print_integer_loop
+                mov r13, neg_flag
+                mov byte [r13], 1
+                neg eax
+;; ---------------------------------------------------------------------
+        print_integer_loop:
+                                        ; make a func to make divs <<< >>>> ------------------!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                div r12                 ; div to the base of the sistema schslenia
+                                        ; rdx = rdx:rax % rbx
+                                        ; rax = rdx:rax / rbx
+                add rdx, hex_alphabet          ;
+                mov bl, [rdx]                  ; mov [rcx], hex_apphabet[rdx]
+                mov [rcx], bl                  ;
+                inc rcx
+                cmp rax, 0
+                je print_integer_end_of_ioa_loop
+                xor rdx, rdx
+                inc rcx                 ; because loop "eat" one inc
+                loop print_integer_loop
+        print_integer_end_of_ioa_loop:
+;; -----------------------below zero correction--------------------------
+                mov r13, neg_flag
+                cmp byte [r13], 0
+                mov byte [r13], 0
+                je  print_integer_positive_number
+                mov byte [rcx], '-'
+                inc rcx
+;; ---------------------------------------------------------------------
+        print_integer_positive_number:
+                sub rcx, buffer   ; size of stack
+                call print_buffer
                 ret
-        char_func:
-                xor r11, r11
-                push rsi
-                mov rsi, buffer
 
-                mov byte r11, [rbp + 8]
-                add rbp, 8
-                mov [rsi], r11
 
-                call print_char
-                pop rsi
-                ret
-        str_func:
-                push rdi
-                push rsi
-                mov rdi, [rbp + 8]              ; take next agr from stack
-                add rbp, 8                      ;
 
-                call super_printf
-                pop rsi
-                pop rdi
-                ret
+
+
+
 
 
 section     .data
