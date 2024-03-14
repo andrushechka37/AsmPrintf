@@ -9,18 +9,6 @@ global super_printf
 ; Почему если убрать push rbp вместе с pop rbp то будет ошибка, хотя стек сбалансирован-------?????????????
 
 
-; fast div
-; jump table
-; %d < 0
-
-;; %c (done) tested
-;; %s (done) tested
-;; %d (done) tested
-;; %%
-;; %x (done) tested
-;; %o (done) tested
-;; %b (done) tested
-
 
 ;; =====================================================================
 ;;                          super_printf
@@ -59,20 +47,18 @@ super_printf:
 
                 inc rsi         ; skip %
 
-                cmp byte [rsi], '%'
-                je not_percent
+                cmp byte [rsi], '%'     ;
+                je not_percent          ; %%
                 
                 xor rcx, rcx
                 xor rax, rax
 
                 mov al, [rsi]                   ;
-                sub al, 'b'                     ;
-                shl rax, 3                      ; jmp jump_table + ([rsi] - 'b') * 8
+                sub al, 'b'                     ; lea --------------------------------------------------------!!!!!!!!!!!!!!!!!!!
+                shl rax, 3                      ; jmp [jump_table + ([rsi] - 'b') * 8]
                 add rax, jump_table             ;
-                
-                jmp [rax]
+                jmp [rax]                       ;
 
-                jmp percent
 
 
 not_percent:
@@ -89,12 +75,13 @@ percent:
                 loop printf_loop
 
         end_of_str:
-                pop rax
+
+                pop rax         ; ret address
 
                 pop rbp
 
                 add rsp, 40             ; pop 5
-                push rax
+                push rax                ; ret adress
                 ret
             
 
@@ -163,8 +150,8 @@ print_number:
                 mov eax, [rbp + 8]      ; take arg from stack    
                 add rbp, 8              ;      
 
-                mov r14, rcx
-                dec r8
+                mov r14, rcx            ; save rcx
+                dec r8                  ; delitel - 1 for ostatoc
 
                 mov rcx, buffer                 ; rcx = ptr to buffer
 
@@ -186,25 +173,22 @@ print_number:
                 mov rdx, rax
                 push rcx
                 mov rcx, r14
-                                        ; make a func to make divs <<< >>>> ------------------!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 shr rax, cl             ; div to the base of the sistema schslenia
                                         ; rdx = rdx:rax % rbx
                                         ; rax = rdx:rax / rbx
 
                 pop rcx
 
-                and rdx, r8
+                and rdx, r8             ; get ostatoc
 
 
-                add rdx, hex_alphabet          ;
-                mov bl, [rdx]                  ; mov [rcx], hex_apphabet[rdx]
+                mov bl, [rdx + hex_alphabet]   ; mov [rcx], hex_apphabet[rdx]
                 mov [rcx], bl                  ;
 
                 inc rcx
                 cmp rax, 0
                 je end_of_ioa_loop
 
-                xor rdx, rdx
  
                 inc rcx                 ; because loop "eat" one inc
                 loop itoa_loop
@@ -260,6 +244,7 @@ print_buffer:
 
                 pop rsi
                 ret
+
 
 binary_type:
         mov cl, 1

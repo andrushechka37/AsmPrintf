@@ -44,7 +44,7 @@ int main() {
     printf(str, par1, par2, par3, par4, par5, par6, par7, par8);
 
     printf("-------------------\n\n");
-    super_printf(" qwerwef %d %x %d%%%c%b %d\n %s", -1, 3802, 100, 33, 127, 5, "haha");
+    super_printf("%d %x %d%%%c%b\n\n", -1, 3802, 100, 33, 127);
     //super_printf("%b\n", 5);
 
 
