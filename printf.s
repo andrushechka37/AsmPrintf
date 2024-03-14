@@ -59,6 +59,9 @@ super_printf:
 
                 inc rsi         ; skip %
 
+                cmp byte [rsi], '%'
+                je not_percent
+                
                 xor rcx, rcx
                 xor rax, rax
 
