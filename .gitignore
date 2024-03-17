@@ -8,7 +8,6 @@ test
 a.out
 *.lst
 .cache
-.vscode
 compile_commands.json
 sfml_example
 sfml_example.cpp
