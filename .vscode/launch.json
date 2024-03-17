@@ -4,34 +4,10 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Huyak",
-      "program": "${workspaceFolder}/a.out",
-      "args": [],
-      "cwd": "${workspaceFolder}"
-    },
-    {
-      "name": "Debug a.out",
-      "type": "cppdbg",
-      "MIMode": "gdb",
-      "request": "launch",
-      "program": "${workspaceFolder}/a.out",
-      "args": [],
-      "sourceFileMap": {
-        "/path/to/main.c": "${workspaceFolder}/main.c",
-        "/path/to/printf.s": "${workspaceFolder}/printf.s"
-      },
-      "stopAtEntry": true,
-      "cwd": "${workspaceFolder}"
-    },
-    {
-      "type": "cppdbg",
-      "request": "launch",
       "name": "andrews bebug",
       "program": "${workspaceFolder}/a.out",
       "args": [],
-      "cwd": "${workspaceFolder}",
-      "stopAtEntry": true,
-      "breakpointMode": "file"
+      "cwd": "${workspaceFolder}"
     },
     {
       "name": "C/C++: gcc сборка активного файла",

@@ -54,8 +54,7 @@ super_printf:
                 xor rax, rax
 
                 mov al, [rsi]                   ;
-                sub al, 'b'                     ; lea --------------------------------------------------------!!!!!!!!!!!!!!!!!!!
-                shl rax, 3                      ; jmp [jump_table + ([rsi] - 'b') * 8]
+                sub al, 'b'                     ; lea --------------------------------------------------------!!!!!!!!!!!!!!!!!!                shl rax, 3                      ; jmp [jump_table + ([rsi] - 'b') * 8]
                 add rax, jump_table             ;
                 jmp [rax]                       ;
 
